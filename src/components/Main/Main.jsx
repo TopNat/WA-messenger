@@ -1,50 +1,104 @@
 import { useRef, useState } from 'react';
 import s from './Main.module.css';
 import { useNavigate } from 'react-router-dom';
-import { useMessageMutation } from '../../serice/apiWA';
+import {
+    useMessageMutation,
+    useSetMessageMutation,
+} from '../../services/apiWA';
+import { useDispatch, useSelector } from 'react-redux';
+import { addMessage } from '../../store/messagesSlice';
+import { clearSessionData, getSessionData } from '../../utils/utils';
 
 const Main = () => {
     const [visibleFilter, setVisibleFilter] = useState(null);
     const navigate = useNavigate();
     const [useMessage] = useMessageMutation();
+    const [setMessage] = useSetMessageMutation();
     const message = useRef(null);
     const chat = useRef(null);
+    const dispatch = useDispatch();
 
-    const messages = [];
+    const messagesChat = useSelector((state) => state.addMessage.messages);
+    console.log(messagesChat);
+
+    const messages = [
+        {
+            message: 'Новое сообщение!',
+            my: true,
+        },
+        {
+            message: 'Новое сообщение 222222222222222222!',
+            my: true,
+        },
+        {
+            message: 'Новое сообщение! 3333333333333333333',
+            my: false,
+        },
+        {
+            message: 'Еще одно Новое сообщение! НЕ МОЕ',
+            my: false,
+        },
+        {
+            message: 'Новое сообщение 222222222222222222!',
+            my: true,
+        },
+        {
+            message:
+                'Новое сообщение lrk;kerl gkdl;fv kgd;lfdk;ldk;l dkg;l kdfl; klb.,mvc,mbc,vm., cm,.mb,m.m.f;ldk;llgd kfjksdhfk uhwu eukhs fkshf kjs hd fkjh uhfukrryur  222222222222222222!',
+            my: true,
+        },
+    ];
 
     const toggleVisibleMenu = () => {
         setVisibleFilter(visibleFilter === false ? true : false);
     };
 
     const exit = () => {
-        localStorage.setItem('idInstance', '');
-        localStorage.setItem('apiTokenInstance', '');
+        /* localStorage.setItem('idInstance', '');
+        localStorage.setItem('apiTokenInstance', '');*/
+        clearSessionData();
         navigate('/entry');
     };
 
     const sendMessage = () => {
-        console.log(message);
-        console.log(chat);
+        // console.log(message);
+        //console.log(chat);
+        console.log(chat.current.value + '@c.us');
 
         const dataForm = {
-            chatId: '79053601281@c.us',
+            chatId: '79053601281@c.us', //chat.current.value + '@c.us',
             message: message.current.value,
         };
-        console.log(dataForm);
+        //console.log(dataForm);
 
-        const idInstance = localStorage.getItem('idInstance');
-        const apiTokenInstance = localStorage.getItem('apiTokenInstance');
-        console.log(apiTokenInstance + '+' + idInstance);
+        const { idInstance, apiTokenInstance } = getSessionData(); //localStorage.getItem('idInstance');
+        // const apiTokenInstance = localStorage.getItem('apiTokenInstance');
+
+        // console.log(apiTokenInstance + '+' + idInstance);
 
         useMessage({
             idInstance: idInstance,
             apiTokenInstance: apiTokenInstance,
             body: dataForm,
+        }).then((data) => {
+            console.log('отправили сообщение');
+            console.log(data);
+            setMessage({
+                idInstance: idInstance,
+                apiTokenInstance: apiTokenInstance,
+            }).then((data) => {
+                console.log(data.data.body.senderData);
+                console.log(data);
+                console.log('получили сообщение');
+            });
         });
-        messages.push({ message: message.current.value, my: true });
-        console.log(messages);
+        const mess = message.current.value;
+        dispatch(addMessage({ message: mess }));
+
+        //messages.push({ message: message.current.value, my: true });
+        //console.log(messages);
         message.current.value = '';
-        messages.map((item) => console.log(item));
+        //  messages.map((item) => console.log(item));
     };
 
     return (
@@ -112,49 +166,22 @@ const Main = () => {
                                 <div
                                     key={index}
                                     className={
-                                        s.main__chat__messages__item__all
+                                        item.my
+                                            ? s.main__chat__messages__item__all__my
+                                            : s.main__chat__messages__item__all
                                     }
                                 >
                                     <div
-                                        className={s.main__chat__messages__item}
+                                        className={
+                                            item.my
+                                                ? s.main__chat__messages__item__my
+                                                : s.main__chat__messages__item
+                                        }
                                     >
                                         {item.message}
                                     </div>
                                 </div>
                             ))}
-                            <div className={s.main__chat__messages__item__all}>
-                                <div className={s.main__chat__messages__item}>
-                                    sdfsdf55
-                                </div>
-                            </div>
-                            <div
-                                className={
-                                    s.main__chat__messages__item__all__my
-                                }
-                            >
-                                <div
-                                    className={s.main__chat__messages__item__my}
-                                >
-                                    sdfsdf444444444444444
-                                </div>
-                            </div>
-
-                            <div className={s.main__chat__messages__item__all}>
-                                <div className={s.main__chat__messages__item}>
-                                    sdfsdf55
-                                </div>
-                            </div>
-                            <div
-                                className={
-                                    s.main__chat__messages__item__all__my
-                                }
-                            >
-                                <div
-                                    className={s.main__chat__messages__item__my}
-                                >
-                                    sdfsdf444444444444444
-                                </div>
-                            </div>
                         </div>
                         <div className={s.main__chat__input}>
                             <input

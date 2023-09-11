@@ -2,8 +2,9 @@ import { useRef } from 'react';
 import s from './Entry.module.css';
 import {
     /* useEntryMutation, */ useAccountStatusMutation,
-} from '../../serice/apiWA';
+} from '../../services/apiWA';
 import { useNavigate } from 'react-router-dom';
+import { setSessionData } from '../../utils/utils';
 
 const Entry = () => {
     console.log('entry');
@@ -32,8 +33,12 @@ const Entry = () => {
                 console.log(data);
                 console.log(data.data.stateInstance);
                 if (data.data.stateInstance === 'authorized') {
-                    localStorage.setItem('idInstance', idInstance);
-                    localStorage.setItem('apiTokenInstance', apiTokenInstance);
+                    /*    sessionStorage.setItem('idInstance', idInstance);
+                    sessionStorage.setItem(
+                        'apiTokenInstance',
+                        apiTokenInstance
+                    );*/
+                    setSessionData({ idInstance, apiTokenInstance });
                     navigate('/');
                 }
             });

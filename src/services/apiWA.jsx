@@ -19,7 +19,17 @@ export const apiWA = createApi({
                 body,
             }),
         }),
+        setMessage: builder.mutation({
+            query: ({ idInstance, apiTokenInstance }) => ({
+                url: `waInstance${idInstance}/receiveNotification/${apiTokenInstance}`,
+                method: 'GET',
+            }),
+        }),
     }),
 });
 
-export const { useMessageMutation, useAccountStatusMutation } = apiWA;
+export const {
+    useMessageMutation,
+    useAccountStatusMutation,
+    useSetMessageMutation,
+} = apiWA;
