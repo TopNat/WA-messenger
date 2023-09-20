@@ -106,6 +106,29 @@
 
 }
 
+.main__listchat__item {
+    border-bottom: 1px solid #F0F2F5;
+    color: #00A783;
+    display: flex;
+    padding: 10px;
+    color: #54656F;
+
+}
+
+.main__listchat__item__logo {
+    /*border: 1px solid #54656F;*/
+    border-radius: 50%;
+    background-color: #F0F2F5;
+    width: 60px;
+    height: 60px;
+
+}
+
+.main__listchat__item__name {
+    padding: 10px;
+
+}
+
 .main__listchat__header__points {
     color: #54656F;
 }

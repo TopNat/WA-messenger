@@ -25,6 +25,12 @@ export const apiWA = createApi({
                 method: 'GET',
             }),
         }),
+        delMessage: builder.mutation({
+            query: ({ idInstance, apiTokenInstance, idDel }) => ({
+                url: `waInstance${idInstance}/deleteNotification/${apiTokenInstance}/${idDel}`,
+                method: 'DELETE',
+            }),
+        }),
     }),
 });
 
@@ -32,4 +38,5 @@ export const {
     useMessageMutation,
     useAccountStatusMutation,
     useSetMessageMutation,
+    useDelMessageMutation,
 } = apiWA;

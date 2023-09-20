@@ -1,12 +1,13 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import s from './Main.module.css';
 import { useNavigate } from 'react-router-dom';
 import {
     useMessageMutation,
     useSetMessageMutation,
+    useDelMessageMutation,
 } from '../../services/apiWA';
 import { useDispatch, useSelector } from 'react-redux';
-import { addMessage } from '../../store/messagesSlice';
+import { addMessage, addChatList } from '../../store/messagesSlice';
 import { clearSessionData, getSessionData } from '../../utils/utils';
 
 const Main = () => {
@@ -14,40 +15,76 @@ const Main = () => {
     const navigate = useNavigate();
     const [useMessage] = useMessageMutation();
     const [setMessage] = useSetMessageMutation();
+    const [delMessage] = useDelMessageMutation();
     const message = useRef(null);
     const chat = useRef(null);
     const dispatch = useDispatch();
+    const { idInstance, apiTokenInstance } = getSessionData();
 
-    const messagesChat = useSelector((state) => state.addMessage.messages);
-    console.log(messagesChat);
+    const messages = useSelector((state) => state.messagesSl.messages);
+    //console.log(messages);
+    const chatList = useSelector((state) => state.messagesSl.chatList);
+    //console.log(chatList);
 
-    const messages = [
-        {
-            message: 'Новое сообщение!',
-            my: true,
-        },
-        {
-            message: 'Новое сообщение 222222222222222222!',
-            my: true,
-        },
-        {
-            message: 'Новое сообщение! 3333333333333333333',
-            my: false,
-        },
-        {
-            message: 'Еще одно Новое сообщение! НЕ МОЕ',
-            my: false,
-        },
-        {
-            message: 'Новое сообщение 222222222222222222!',
-            my: true,
-        },
-        {
-            message:
-                'Новое сообщение lrk;kerl gkdl;fv kgd;lfdk;ldk;l dkg;l kdfl; klb.,mvc,mbc,vm., cm,.mb,m.m.f;ldk;llgd kfjksdhfk uhwu eukhs fkshf kjs hd fkjh uhfukrryur  222222222222222222!',
-            my: true,
-        },
-    ];
+    useEffect(() => {
+        setInterval(() => {
+            setMessage({
+                idInstance: idInstance,
+                apiTokenInstance: apiTokenInstance,
+            }).then((data) => {
+                //console.log(data);
+                if (!data.data) {
+                    return;
+                } else {
+                    //console.log('уведомление получено');
+                    if (
+                        data.data.body.typeWebhook === 'incomingMessageReceived'
+                    ) {
+                        const typeMessage =
+                            data.data?.body.messageData.typeMessage;
+                        //console.log(typeMessage);
+                        const chatIdMessage = data.data?.body.senderData.chatId;
+                        //console.log(chatIdMessage);
+                        if (typeMessage === 'textMessage') {
+                            const textMessage =
+                                data.data?.body.messageData.textMessageData
+                                    .textMessage;
+                            //console.log(textMessage);
+                            if (
+                                chatIdMessage ===
+                                chat.current.value + '@c.us'
+                            ) {
+                                /*  console.log(messages);
+
+                                let messFindId = messages.find(
+                                    (item) =>
+                                        item.id === data.data?.body.idMessage
+                                );
+                                console.log('messFindId = ' + messFindId);*/
+
+                                dispatch(
+                                    addMessage({
+                                        mess: textMessage,
+                                        my: false,
+                                        id: data.data?.body.idMessage,
+                                        chat: chat.current.value,
+                                    })
+                                );
+                            }
+                        }
+                    }
+                    delMessage({
+                        idInstance: idInstance,
+                        apiTokenInstance: apiTokenInstance,
+                        idDel: data.data.receiptId,
+                    }).then(() => {
+                        //console.log(data);
+                        //console.log('удалили сообщение');
+                    });
+                }
+            });
+        }, 6000);
+    }, []);
 
     const toggleVisibleMenu = () => {
         setVisibleFilter(visibleFilter === false ? true : false);
@@ -61,46 +98,42 @@ const Main = () => {
     };
 
     const sendMessage = () => {
-        // console.log(message);
-        //console.log(chat);
-        console.log(chat.current.value + '@c.us');
-
         const dataForm = {
-            chatId: '79053601281@c.us', //chat.current.value + '@c.us',
+            chatId: chat.current.value + '@c.us',
             message: message.current.value,
         };
         //console.log(dataForm);
-
-        const { idInstance, apiTokenInstance } = getSessionData(); //localStorage.getItem('idInstance');
-        // const apiTokenInstance = localStorage.getItem('apiTokenInstance');
-
-        // console.log(apiTokenInstance + '+' + idInstance);
-
+        const mess = message.current.value;
         useMessage({
             idInstance: idInstance,
             apiTokenInstance: apiTokenInstance,
             body: dataForm,
         }).then((data) => {
-            console.log('отправили сообщение');
-            console.log(data);
-            setMessage({
-                idInstance: idInstance,
-                apiTokenInstance: apiTokenInstance,
-            }).then((data) => {
-                console.log(data.data.body.senderData);
-                console.log(data);
-                console.log('получили сообщение');
-            });
+            //console.log('отправили сообщение');
+            //console.log(data);
+            if (!chatList.includes(chat.current.value)) {
+                dispatch(addChatList({ chat: chat.current.value }));
+            }
+            if (!data.data) {
+                return;
+            } else {
+                dispatch(
+                    addMessage({
+                        mess: mess,
+                        my: true,
+                        id: data.data.idMessage,
+                        chat: chat.current.value,
+                    })
+                );
+            }
         });
-        const mess = message.current.value;
-        dispatch(addMessage({ message: mess }));
 
-        //messages.push({ message: message.current.value, my: true });
-        //console.log(messages);
         message.current.value = '';
-        //  messages.map((item) => console.log(item));
     };
 
+    const selectChat = (e) => {
+        chat.current.value = e.target.textContent;
+    };
     return (
         <div className={s.main}>
             <div className={s.main__header}>
@@ -134,7 +167,6 @@ const Main = () => {
                                 </div>
                             )}
                         </div>
-
                         <div className={s.main__listchat__addchat}>
                             <input
                                 ref={chat}
@@ -159,29 +191,46 @@ const Main = () => {
                                 ></path>
                             </svg>
                         </div>
+                        {chatList.map((item, index) => (
+                            <div
+                                key={index}
+                                className={s.main__listchat__item}
+                                onClick={(event) => selectChat(event)}
+                            >
+                                <div
+                                    className={s.main__listchat__item__logo}
+                                ></div>
+                                <div className={s.main__listchat__item__name}>
+                                    {item}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                     <div className={s.main__chat}>
                         <div className={s.main__chat__messages}>
-                            {messages.map((item, index) => (
-                                <div
-                                    key={index}
-                                    className={
-                                        item.my
-                                            ? s.main__chat__messages__item__all__my
-                                            : s.main__chat__messages__item__all
-                                    }
-                                >
-                                    <div
-                                        className={
-                                            item.my
-                                                ? s.main__chat__messages__item__my
-                                                : s.main__chat__messages__item
-                                        }
-                                    >
-                                        {item.message}
-                                    </div>
-                                </div>
-                            ))}
+                            {messages.map(
+                                (item, index) =>
+                                    item.chat === chat.current.value && (
+                                        <div
+                                            key={index}
+                                            className={
+                                                item.my
+                                                    ? s.main__chat__messages__item__all__my
+                                                    : s.main__chat__messages__item__all
+                                            }
+                                        >
+                                            <div
+                                                className={
+                                                    item.my
+                                                        ? s.main__chat__messages__item__my
+                                                        : s.main__chat__messages__item
+                                                }
+                                            >
+                                                {item.text}
+                                            </div>
+                                        </div>
+                                    )
+                            )}
                         </div>
                         <div className={s.main__chat__input}>
                             <input

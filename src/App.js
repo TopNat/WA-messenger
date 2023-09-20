@@ -5,7 +5,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { Routes, Route } from 'react-router-dom';
 
 function App() {
-    console.log('app');
     return (
         <div className="App center">
             <Routes>

@@ -1,12 +1,13 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { apiWA } from '../services/apiWA';
-import { addMessage } from './messagesSlice';
+import { messagesSlice } from './messagesSlice';
 
+const rootReducer = combineReducers({
+    [apiWA.reducerPath]: apiWA.reducer,
+    [messagesSlice.name]: messagesSlice.reducer,
+});
 export const store = configureStore({
-    reducer: {
-        [apiWA.reducerPath]: apiWA.reducer,
-        addMessage,
-    },
+    reducer: rootReducer,
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(apiWA.middleware),
 });
