@@ -1,0 +1,16 @@
+.main {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: #F0F2F5;
+    align-items: center;
+}
+
+
+.main__error {
+    font-weight: 600;
+    font-size: xx-large;
+    color: #25D366;
+    align-items: center;
+}

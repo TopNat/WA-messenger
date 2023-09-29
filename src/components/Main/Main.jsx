@@ -5,6 +5,7 @@ import {
     useMessageMutation,
     useSetMessageMutation,
     useDelMessageMutation,
+    useCheckNumberMutation,
 } from '../../services/apiWA';
 import { useDispatch, useSelector } from 'react-redux';
 import { addMessage, addChatList } from '../../store/messagesSlice';
@@ -16,15 +17,16 @@ const Main = () => {
     const [useMessage] = useMessageMutation();
     const [setMessage] = useSetMessageMutation();
     const [delMessage] = useDelMessageMutation();
+    const [error, setError] = useState('');
     const message = useRef(null);
     const chat = useRef(null);
     const dispatch = useDispatch();
     const { idInstance, apiTokenInstance } = getSessionData();
+    const [checkNumber] = useCheckNumberMutation();
 
     const messages = useSelector((state) => state.messagesSl.messages);
-    //console.log(messages);
+
     const chatList = useSelector((state) => state.messagesSl.chatList);
-    //console.log(chatList);
 
     useEffect(() => {
         setInterval(() => {
@@ -32,36 +34,26 @@ const Main = () => {
                 idInstance: idInstance,
                 apiTokenInstance: apiTokenInstance,
             }).then((data) => {
-                //console.log(data);
                 if (!data.data) {
                     return;
                 } else {
-                    //console.log('уведомление получено');
                     if (
                         data.data.body.typeWebhook === 'incomingMessageReceived'
                     ) {
                         const typeMessage =
                             data.data?.body.messageData.typeMessage;
-                        //console.log(typeMessage);
+
                         const chatIdMessage = data.data?.body.senderData.chatId;
-                        //console.log(chatIdMessage);
+
                         if (typeMessage === 'textMessage') {
                             const textMessage =
                                 data.data?.body.messageData.textMessageData
                                     .textMessage;
-                            //console.log(textMessage);
+
                             if (
                                 chatIdMessage ===
                                 chat.current.value + '@c.us'
                             ) {
-                                /*  console.log(messages);
-
-                                let messFindId = messages.find(
-                                    (item) =>
-                                        item.id === data.data?.body.idMessage
-                                );
-                                console.log('messFindId = ' + messFindId);*/
-
                                 dispatch(
                                     addMessage({
                                         mess: textMessage,
@@ -77,9 +69,6 @@ const Main = () => {
                         idInstance: idInstance,
                         apiTokenInstance: apiTokenInstance,
                         idDel: data.data.receiptId,
-                    }).then(() => {
-                        //console.log(data);
-                        //console.log('удалили сообщение');
                     });
                 }
             });
@@ -91,44 +80,51 @@ const Main = () => {
     };
 
     const exit = () => {
-        /* localStorage.setItem('idInstance', '');
-        localStorage.setItem('apiTokenInstance', '');*/
         clearSessionData();
         navigate('/entry');
     };
 
     const sendMessage = () => {
+        setError('');
         const dataForm = {
             chatId: chat.current.value + '@c.us',
             message: message.current.value,
         };
-        //console.log(dataForm);
+
         const mess = message.current.value;
-        useMessage({
+        checkNumber({
             idInstance: idInstance,
             apiTokenInstance: apiTokenInstance,
-            body: dataForm,
+            body: { phoneNumber: chat.current.value },
         }).then((data) => {
-            //console.log('отправили сообщение');
-            //console.log(data);
-            if (!chatList.includes(chat.current.value)) {
-                dispatch(addChatList({ chat: chat.current.value }));
-            }
-            if (!data.data) {
-                return;
+            if (data.data?.existsWhatsapp) {
+                useMessage({
+                    idInstance: idInstance,
+                    apiTokenInstance: apiTokenInstance,
+                    body: dataForm,
+                }).then((data) => {
+                    if (!chatList.includes(chat.current.value)) {
+                        dispatch(addChatList({ chat: chat.current.value }));
+                    }
+                    if (!data.data) {
+                        return;
+                    } else {
+                        dispatch(
+                            addMessage({
+                                mess: mess,
+                                my: true,
+                                id: data.data.idMessage,
+                                chat: chat.current.value,
+                            })
+                        );
+                    }
+                });
+
+                message.current.value = '';
             } else {
-                dispatch(
-                    addMessage({
-                        mess: mess,
-                        my: true,
-                        id: data.data.idMessage,
-                        chat: chat.current.value,
-                    })
-                );
+                setError('Неверный формат номера телефона');
             }
         });
-
-        message.current.value = '';
     };
 
     const selectChat = (e) => {
@@ -191,6 +187,7 @@ const Main = () => {
                                 ></path>
                             </svg>
                         </div>
+                        <div className={s.main__listchat__error}>{error}</div>
                         {chatList.map((item, index) => (
                             <div
                                 key={index}

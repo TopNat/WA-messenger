@@ -1,45 +1,42 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import s from './Entry.module.css';
-import {
-    /* useEntryMutation, */ useAccountStatusMutation,
-} from '../../services/apiWA';
+import { useAccountStatusMutation } from '../../services/apiWA';
 import { useNavigate } from 'react-router-dom';
 import { setSessionData } from '../../utils/utils';
 
 const Entry = () => {
-    console.log('entry');
     const instance = useRef(null);
     const tokenInstance = useRef(null);
+    const [error, setError] = useState('');
 
     const [accauntStatus] = useAccountStatusMutation();
+
     const navigate = useNavigate();
 
     const sendIdInstance = (event) => {
         event.preventDefault();
-        //console.log('send');
-        //console.log(instance.current.value);
-        //console.log(tokenInstance.current.value);
 
         const idInstance = instance.current.value;
         const apiTokenInstance = tokenInstance.current.value;
-
-        console.log(idInstance + '+' + apiTokenInstance);
 
         if (idInstance.length > 0 && apiTokenInstance.length > 0) {
             accauntStatus({
                 idInstance: idInstance,
                 apiTokenInstance: apiTokenInstance,
             }).then((data) => {
-                console.log(data);
-                console.log(data.data.stateInstance);
-                if (data.data.stateInstance === 'authorized') {
-                    /*    sessionStorage.setItem('idInstance', idInstance);
-                    sessionStorage.setItem(
-                        'apiTokenInstance',
-                        apiTokenInstance
-                    );*/
-                    setSessionData({ idInstance, apiTokenInstance });
-                    navigate('/');
+                if (data.data?.stateInstance) {
+                    if (data.data.stateInstance === 'authorized') {
+                        setSessionData({ idInstance, apiTokenInstance });
+                        navigate('/');
+                    } else {
+                        setError(
+                            'Проблема с авторизацией, проверьте корректность указания apiTokenInstance, partnerToken'
+                        );
+                    }
+                } else {
+                    setError(
+                        'Проблема с авторизацией, проверьте корректность указания apiTokenInstance, partnerToken'
+                    );
                 }
             });
         }
@@ -78,6 +75,11 @@ const Entry = () => {
                             />
                         </div>
                     </div>
+                    {error !== '' && (
+                        <div>
+                            <div className={s.main__error}>{error}</div>
+                        </div>
+                    )}
                     <div className={s.main__button}>
                         <button className={s.main__button__item}>Войти</button>
                     </div>

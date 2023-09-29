@@ -47,6 +47,12 @@
 
 }
 
+.main__listchat__error {
+    font-weight: 400;
+    font-style: normal;
+    color: #25D366;
+}
+
 .main__chat {
 
     width: 70%;

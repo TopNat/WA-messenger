@@ -31,6 +31,13 @@ export const apiWA = createApi({
                 method: 'DELETE',
             }),
         }),
+        checkNumber: builder.mutation({
+            query: ({ idInstance, apiTokenInstance, body }) => ({
+                url: `waInstance${idInstance}/checkWhatsapp/${apiTokenInstance}`,
+                method: 'POST',
+                body,
+            }),
+        }),
     }),
 });
 
@@ -39,4 +46,5 @@ export const {
     useAccountStatusMutation,
     useSetMessageMutation,
     useDelMessageMutation,
+    useCheckNumberMutation,
 } = apiWA;
